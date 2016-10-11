@@ -1,0 +1,6 @@
+---
+- name: Ensure Swarm Master Initialization
+  become: yes
+  command: "docker swarm init --advertise-addr 172.42.42.1"
+  tags:
+    - swarm
