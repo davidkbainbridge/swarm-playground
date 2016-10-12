@@ -79,3 +79,9 @@
     update_cache: yes
     name: docker-engine
     state: latest
+
+- name: Ensure Ubuntu User in Docker Group
+  user:
+    name: ubuntu
+    append: yes
+    groups: docker
