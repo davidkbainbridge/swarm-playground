@@ -139,3 +139,49 @@ this command differences in the `watch` command should be highlighted.
 ubuntu@swarm1:~$ docker service scale hello-service=5
 hello-service scaled to 5
 ```
+
+### Service Health Check
+The test container image used above `davidkbainbridge/docker-hello-world:latest`
+is build with a health check capability. The container provides a REST end
+point that will return `200 Ok` by default, but this can be manual set to a
+different value to test error cases. See the container documentation
+at https://github.com/davidkbainbridge/docker-hello-world for more information.
+
+To see the health of any given instance of the service implementation, you can
+`ssh` to the node and perform a `docker ps`. This will show the running
+containers augmented with their health status.
+
+```
+ubuntu@swarm1:~$  docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS                    PORTS               NAMES
+d8af515b0aa4        local-test:now      "go-wrapper run"    12 minutes ago      Up 12 minutes (healthy)                       hello-service.1.aguae4r9zq7oacqndckz0f5hj
+```
+
+To demonstrate the health check capability of the cluster, you can open up a
+`ssh` session to each node in the swarm and run the command
+`watch -d docker ps`. This command will periodically update the screen with
+information about which containers are running on the node. For each container
+running there will be a value indicating how long the container has running
+under the title `STATUS`.
+
+To cause one of the container instances to start reporting a failed health
+value you can set a random instance to fail using
+
+```
+curl -XPOST --sSL http://localhost:80/health -d '{"status":501}'
+```
+
+This will set the health check on a random instance in the cluster to return
+"501 Internal Server Error". If you want to fail the health check on a specific
+instance you will nee to make a similar `curl` request to the specific
+container instance.
+
+After setting the health check to return a failure value monitor the three
+`ssh` sessions that are *watching* the `docker ps` output. After about one
+minute one of the instances should be killed and restarted. You may see the
+`docker ps` output go blank. A new instance will be started and the `STATUS`
+of that new instance is evidence that a new container instance was started as
+the time it has between running should be less than the time running of the
+other instances.
+
+*NOTE: the frequency of health checks is configurable*
