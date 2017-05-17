@@ -74,7 +74,7 @@ To start the service you can issue the following command on the swarm leader
 (**swarm1**).
 
 ```
-docker service create --replicas 3 --name hello-service \
+docker service create --replicas 3 --detach=true --name hello-service \
     --publish 80:8080 davidkbainbridge/docker-hello-world:latest
 ```
 
