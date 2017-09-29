@@ -2,7 +2,7 @@
 - name: Capture Swarm Cluster Worker Token
   become: yes
   become_user: ubuntu
-  shell: ssh ubuntu@172.42.43.1 sudo docker swarm join-token -q worker 2>/dev/null
+  shell: ssh ubuntu@172.42.43.101 sudo docker swarm join-token -q worker 2>/dev/null
   register: worker_token
   changed_when: false
 
@@ -12,4 +12,4 @@
 
 - name: Join Swarm Cluster
   become: yes
-  command: "docker swarm join --token {{ worker_token.stdout }} 172.42.43.1:2377"
+  command: "docker swarm join --token {{ worker_token.stdout }} 172.42.43.101:2377"

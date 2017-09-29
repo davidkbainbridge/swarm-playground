@@ -34,9 +34,9 @@ The machines created are:
 
 | NAME | IP ADDRESS | ROLE |
 | --- | --- | --- |
-| swarm1 | 172.42.43.1 | Cluster Leader |
-| swarm2 | 172.42.43.2 | Cluster Worker |
-| swarm2 | 172.42.43.3 | Cluster Worker |
+| swarm1 | 172.42.43.101 | Cluster Leader |
+| swarm2 | 172.42.43.102 | Cluster Worker |
+| swarm2 | 172.42.43.103 | Cluster Worker |
 
 As the cluster brought up the cluster leader (**swarm1**) will perform a
 `docker swarm init` and the cluster workers will perform a `docker swarm join`.
@@ -95,7 +95,7 @@ load balances the request to any server to one of the instances. The example
 below accesses the service via the IP address of swarm1.
 
 ```
-ubuntu@swarm1:~$ curl -sSL http://172.42.43.1:80
+ubuntu@swarm1:~$ curl -sSL http://172.42.43.101:80
 Hello, "/"
 HOST: 7198084f1b91
 ADDRESSES:
@@ -117,7 +117,7 @@ previous request. This demonstrates that the request is being handled by
 different services.
 
 ```
-watch -d curl -sSL http://172.42.43.1:80
+watch -d curl -sSL http://172.42.43.101:80
 ```
 
 Currently there should be 3 instances of the service implementation being

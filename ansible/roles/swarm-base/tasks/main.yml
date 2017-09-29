@@ -39,46 +39,47 @@
     name: "{{ item }}"
     state: latest
   with_items:
+    - "curl"
     - "apt-transport-https"
     - "ca-certificates"
+    - "software-properties-common" 
 
 - name: Ensure Docker Keys
   become: yes
-  apt_key:
-    keyserver: hkp://p80.pool.sks-keyservers.net:80
-    id: 58118E89F3A912897C070ADBF76221572C52609D
-    state: present
+  shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   tags:
     - swarm
 
 - name: Ensure Docker Repository
   become: yes
-  lineinfile:
-    create: yes
-    dest: /etc/apt/sources.list.d/docker.list
-    line: "deb https://apt.dockerproject.org/repo ubuntu-xenial main"
-    owner: root
-    group: root
-    mode: 0644
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu xenial stable
+    state: present
   tags:
     - swarm
 
-- name: Update Apt Cache with Docker
+- name: Ensure older docker artifacts are not present
   become: yes
   apt:
     update_cache: yes
-    name: lxc-docker
+    name: "{{ item }}"
     state: absent
-
-- name: Update Apt Cache Policy
-  become: yes
-  command: apt-cache policy docker-engine
+  with_items:
+    - "docker"
+    - "docker-engine"
+    - "docker.io"
+    - "lxc-docker"
 
 - name: Ensure Docker
   apt:
     update_cache: yes
-    name: docker-engine
+    name: "{{ item }}"
     state: latest
+  with_items:
+    - "linux-image-extra-4.4.0-93-generic"
+    - "linux-image-extra-virtual"
+    - "software-properties-common"
+    - "docker-ce"
 
 - name: Ensure Ubuntu User in Docker Group
   user:
