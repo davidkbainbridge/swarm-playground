@@ -1,0 +1,258 @@
+version: "3"
+services:
+
+#
+# Deploying a Fluentd cluster using this file assumes that overlay network 'voltha_net'
+# has already been created. To deploy the fluentd cluster, issue the command:
+#
+#     docker stack deploy -c docker-compose-fluentd-cluster.yml fluentd
+#
+# This spins up two Fluentd Forwarders and one each Fluentd Aggregator-Active, Fluentd Aggregator-Standby.
+# The forwards listens for voltha components logs on port 23224 and sends them towards Fluentd Aggregator. 
+# Fluentd Aggregator writes them to their host mounted disk
+#
+
+  fluentd:
+    image: opencord/voltha-fluentd
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    environment:
+        SERVICE_24224_NAME: "fluentd-intake"
+        FLUENTD_CONF: fluent.conf
+    networks:
+      - voltha-net
+    ports:
+      - "24224"
+
+  freeradius:
+    deploy:
+      replicas: 0
+    image: marcelmaatkamp/freeradius
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813"
+      - "18120:18120"
+    #volumes:
+    #    - /cord/incubator/voltha/compose/data/clients.conf:/etc/raddb/clients.conf
+    #    - /cord/incubator/voltha/compose/data/users:/etc/raddb/users
+    networks:
+      - onos
+      - voltha-net
+
+  onos_cluster_manager:
+    image: opencord/voltha-unum
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    environment:
+      PERIOD: "10s"
+      LOG_LEVEL: "debug"
+      ORCHESTRATION: "swarm://"
+      LABELS: "org.voltha.onos.cluster:true"
+      NETWORK: "org.voltha.onos.cluster:true"
+    networks:
+      - onos
+      - voltha-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  onos:
+    deploy:
+      replicas: 1
+    labels:
+      org.voltha.onos.cluster: "true"
+    image: opencord/voltha-onos
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    ports:
+      - 8101:8101 # ssh
+      - 6653:6653 # OF
+      - 8181:8181 # UI
+    environment:
+      EXTRA_JAVA_OPTS: "-Donos.cluster.metadata.uri=http://onos_cluster_manager:5411/config/"
+    networks:
+      - onos
+      - voltha-net
+
+  vcore:
+    image: opencord/voltha
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      replicas: 3
+    entrypoint:
+      - voltha/voltha/main.py
+      - -v
+      - --consul=consul:8500
+      - --fluentd=fluentd:24224
+      - --kafka=kafka
+      - --rest-port=8880
+      - --grpc-port=50556
+      - --instance-id-is-container-name
+      - --interface=eth2
+      - --backend=consul
+      - --inter-core-subnet=172.29.19.0/24
+      - --pon-subnet=172.29.19.0/24
+    networks:
+      - voltha-net
+    ports:
+      - "8880:8880"
+      - "18880:18880"
+      - "50556:50556"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+
+  ofagent:
+    image: opencord/voltha-ofagent
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      replicas: 1
+    entrypoint:
+      - /ofagent/ofagent/main.py
+      - -v
+      - --consul=consul:8500
+      - --fluentd=fluentd:24224
+      - --controller=onos:6653
+      - --grpc-endpoint=vcore:50556
+      - --instance-id-is-container-name
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    networks:
+      - voltha-net
+
+  voltha:
+    image: opencord/voltha-envoy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      replicas: 1
+    environment:
+      DOCKER_HOST_IP: "${DOCKER_HOST_IP}"
+    entrypoint:
+      - /usr/local/bin/envoyd
+      - -envoy-cfg-template
+      - "/envoy/voltha-grpc-proxy.template.json"
+      - -envoy-config
+      - "/envoy/voltha-grpc-proxy.json"
+    networks:
+      - voltha-net
+    ports:
+      - "50555:50555"
+      - "8882:8882"
+      - "8443:8443"
+      - "8001:8001"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+
+  cli:
+    image: opencord/voltha-cli:latest
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      replicas: 2
+    environment:
+      DOCKER_HOST_IP: "${DOCKER_HOST_IP}"
+    entrypoint:
+      - /cli/cli/setup.sh
+      - -C consul:8500
+      - -g voltha:50555
+      - -s voltha:18880
+      - -G
+    networks:
+      - voltha-net
+    ports:
+      - "5022:22"
+
+  netconf:
+    image: opencord/voltha-netconf
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      mode: global
+    environment:
+      SERVICE_1830_NAME: "netconf-server"
+    entrypoint:
+      - /netconf/netconf/main.py
+      - -v
+      - --consul=consul:8500
+      - --fluentd=fluentd:24224
+      - --grpc-endpoint=voltha:50555
+      - --instance-id-is-container-name
+    networks:
+      - voltha-net
+    ports:
+      - "830:1830"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+
+  tools:
+    image: opencord/voltha-tools
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: 3
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "7022:22"
+    networks:
+      - voltha-net
+      - kafka-net
+
+networks:
+  onos:
+    driver: overlay
+    driver_opts:
+      encrypted: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/24
+    labels:
+      org.voltha.onos.cluster: "true"
+
+  voltha-net:
+    external:
+      name: voltha_net
+
+  kafka-net:
+    external:
+      name: kafka_net

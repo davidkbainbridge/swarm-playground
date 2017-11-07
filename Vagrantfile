@@ -3,7 +3,7 @@
 
 Vagrant.configure(2) do |config|
 
-  (1..5).each do |i|
+  (1..3).each do |i|
     config.vm.define "swarm#{i}" do |s|
       s.ssh.forward_agent = true
       s.vm.box = "ubuntu/xenial64"

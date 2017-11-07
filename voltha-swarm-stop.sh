@@ -18,8 +18,10 @@ WHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
 SERVICES="netconf_netconf cli_cli voltha_voltha ofagent_ofagent vcore_vcore tools"
+SERVICES=""
 STACKS="consul kafka fluentd onos"
-NETWORKS="voltha_net"
+STACKS="consul kafka fluentd voltha"
+NETWORKS="voltha_net kafka_net"
 
 for s in $SERVICES; do
     echo -n "[service] $s ... "
@@ -31,7 +33,7 @@ for s in $SERVICES; do
             echo -e "${RED}ERROR: $OUT${NC}"
         fi
     else
-        echo -e "${WHITE}not found${NC}"
+        echo -e "${WHITE}not running${NC}"
     fi
 done
 
@@ -45,7 +47,7 @@ for s in $STACKS; do
             echo -e "${RED}ERROR: $OUT${NC}"
         fi
     else
-        echo -e "${WHITE}not found${NC}"
+        echo -e "${WHITE}not running${NC}"
     fi
 done
 
@@ -59,6 +61,6 @@ for n in $NETWORKS; do
             echo -e "${RED}ERROR: $OUT${NC}"
         fi
     else
-        echo -e "${WHITE}not found${NC}"
+        echo -e "${WHITE}not running${NC}"
     fi
 done
