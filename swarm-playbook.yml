@@ -1,0 +1,16 @@
+---
+- hosts: all
+  roles:
+    - docker
+
+- hosts: swarm_seed
+  roles:
+    - swarm-seed    
+
+- hosts: swarm_workers
+  roles:
+    - swarm-worker
+
+- hosts: swarm_managers
+  roles:
+    - swarm-manager

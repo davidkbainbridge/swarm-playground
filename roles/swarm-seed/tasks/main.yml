@@ -1,0 +1,33 @@
+---
+- name: Capture IP used for SSH connection
+  shell: echo "{{ ansible_env['SSH_CONNECTION'] }}" | cut "-d " -f3
+  register: captured_ip
+  when: swarm_address is not defined
+
+- name: Set Default Swarm Advertized IP
+  set_fact:
+      swarm_address: "{{ captured_ip.stdout }}"
+  when: swarm_address is not defined
+
+- name: Capture Swarm Initialized
+  become: yes
+  command: docker info -f "{{ '{{' }} .Swarm.LocalNodeState {{ '}}' }}"
+  changed_when: false
+  register: swarm_state
+
+- name: Ensure Swarm Initialized
+  become: yes
+  command: docker swarm init --advertise-addr {{ swarm_address }}
+  when: swarm_state.stdout != "active"
+
+- name: Capture Swarm Worker Token
+  become: yes
+  command: docker swarm join-token worker -q
+  changed_when: false
+  register: swarm_worker_token
+
+- name: Capture Swarm Manager Token
+  become: yes
+  command: docker swarm join-token manager -q
+  changed_when: false
+  register: swarm_manager_token

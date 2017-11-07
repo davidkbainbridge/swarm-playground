@@ -17,22 +17,7 @@
 
 set -e
 
-echo "Installing Ansible..."
+echo "Bootstrapping ..."
+echo "ubuntu:ubuntu" | sudo chpasswd
 apt-get update -y
-apt-get install -y software-properties-common
-apt-add-repository ppa:ansible/ansible
-apt-get update
-apt-get install -y ansible apt-transport-https jq
-
-mkdir -p .ssh
-set | grep ubuntu
-cat <<END_CONFIG > .ssh/config
-Host *
-   StrictHostKeyChecking no
-   UserKnownHostsFile=/dev/null
-   ServerAliveInterval=60
-END_CONFIG
-
-chown $SUDO_USER:$SUDO_USER .ssh/config
-chmod 600 .ssh/config
-
+apt-get install -y software-properties-common python jq
