@@ -13,7 +13,7 @@ services:
 #
 
   fluentdactv:
-    image: opencord/voltha-fluentd
+    image: opencord/voltha-fluentd:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -33,7 +33,7 @@ services:
     #  - "/var/log:fluentd/log"
 
   fluentdstby:
-    image: opencord/voltha-fluentd
+    image: opencord/voltha-fluentd:${TAG:-latest}
     logging:
       driver: "json-file"
       options:

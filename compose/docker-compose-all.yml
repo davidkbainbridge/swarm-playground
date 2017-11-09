@@ -13,7 +13,7 @@ services:
 #
 
   fluentd:
-    image: opencord/voltha-fluentd
+    image: opencord/voltha-fluentd:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -35,7 +35,7 @@ services:
   freeradius:
     deploy:
       replicas: 0
-    image: marcelmaatkamp/freeradius
+    image: marcelmaatkamp/freeradius:${RADIUS_TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -53,7 +53,7 @@ services:
       - voltha-net
 
   onos_cluster_manager:
-    image: opencord/voltha-unum
+    image: opencord/voltha-unum:${TAG:-latest}
     deploy:
       replicas: 1
       placement:
@@ -76,7 +76,7 @@ services:
       replicas: 1
     labels:
       org.voltha.onos.cluster: "true"
-    image: opencord/voltha-onos
+    image: opencord/voltha-onos:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -93,7 +93,7 @@ services:
       - voltha-net
 
   vcore:
-    image: opencord/voltha
+    image: opencord/voltha:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -124,7 +124,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock
 
   ofagent:
-    image: opencord/voltha-ofagent
+    image: opencord/voltha-ofagent:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -146,7 +146,7 @@ services:
       - voltha-net
 
   voltha:
-    image: opencord/voltha-envoy
+    image: opencord/voltha-envoy:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -173,7 +173,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock
 
   cli:
-    image: opencord/voltha-cli:latest
+    image: opencord/voltha-cli:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -195,7 +195,7 @@ services:
       - "5022:22"
 
   netconf:
-    image: opencord/voltha-netconf
+    image: opencord/voltha-netconf:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
@@ -220,7 +220,7 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock
 
   tools:
-    image: opencord/voltha-tools
+    image: opencord/voltha-tools:${TAG:-latest}
     logging:
       driver: "json-file"
       options:
