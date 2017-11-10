@@ -65,6 +65,8 @@ services:
       ORCHESTRATION: "swarm://"
       LABELS: "org.voltha.onos.cluster:true"
       NETWORK: "org.voltha.onos.cluster:true"
+    ports:
+      - 5411:5411
     networks:
       - onos
       - voltha-net
@@ -74,8 +76,8 @@ services:
   onos:
     deploy:
       replicas: 1
-    labels:
-      org.voltha.onos.cluster: "true"
+      labels:
+        org.voltha.onos.cluster: "true"
     image: opencord/voltha-onos:${TAG:-latest}
     logging:
       driver: "json-file"

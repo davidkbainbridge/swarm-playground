@@ -85,6 +85,7 @@ do
         patience=`expr $patience - 1`
         if [ $patience -eq 0 ]; then
                 echo -e "${RED}Consul leader election taking too long... aborting${NC}"
+		echo "Stopping VOLTHA ... "
                 ./voltha-swarm-stop.sh
                 exit 1
         fi

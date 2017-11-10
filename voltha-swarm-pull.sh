@@ -20,5 +20,5 @@ while getopts d:h OPT; do
 done
 
 for i in $(grep "^\ *image:" $BASE_DIR/compose/*.yml  | awk '{print $3}' | sort -u); do
-    docker pull $i;
+    eval docker pull $i;
 done
