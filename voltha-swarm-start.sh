@@ -9,8 +9,10 @@ WHITE='\033[1;37m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo >&2 "$PROG: [-d <dir>] [-h]"
+    echo >&2 "$PROG: [-d <dir>] [-l <log-dir>] [-h]"
     echo >&2 "  -d <dir>        directory in which the 'compose file directory' is located, defaults to '$(pwd)'"
+    echo >&2 "  -l <log-dir>    directory into which fluentd logs will be written"
+    echo >&1 "  -c <consul-dir> directory into which consul data is written"
     echo >&2 "  -h              this message"
 }
 
@@ -30,13 +32,19 @@ wait_for_service() {
 }
 
 OPTIND=1
-while getopts d:h OPT; do
+while getopts d:l:c:h OPT; do
     case "$OPT" in
         d) BASE_DIR="$OPTARG";;
+	l) VOLTHA_LOGS="$OPTARG";;
+	c) CONSUL_ROOT="$OPTARG";;
         h) usage;
            exit 1;;
         esac
 done
+
+# If `REGISTRY` is set, but doesn't end in a `/`, then
+# add one
+test -z "$REGISTRY" -o "$(echo ${REGISTRY: -1})" == "/" || REGISTRY="$REGISTRY/"
 
 # Attempt to count Ready Docker Swarm managers
 export SWARM_MANAGER_COUNT=$(docker node ls | grep Ready | egrep '(Leader)|(Reachable)' | wc -l)
